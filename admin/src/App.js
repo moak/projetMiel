@@ -1,14 +1,33 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
+import { Button, Loader, Input } from "rsuite";
+
+import "rsuite/dist/rsuite.min.css";
+
+function wait(seconds) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, seconds * 1000);
+  });
+}
+
 function App() {
-  const [pots, setPots] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [newProduct, setNewProduct] = useState({
+    nom: null,
+    poids: null,
+    image: null,
+  });
 
   useEffect(() => {
     axios
-      .get("http://localhost:3000/products")
-      .then((response) => {
-        setPots(response.data);
+      .get("http://localhost:3001/products")
+      .then(async (response) => {
+        await wait(1);
+        setProducts(response.data);
+        setIsLoading(false);
       })
       .catch((error) => {
         console.log(error);
@@ -17,25 +36,97 @@ function App() {
 
   const deleteProduct = (productId) => {
     axios
-      .delete(`http://localhost:3000/products/${productId}`)
+      .delete(`http://localhost:3001/products/${productId}`)
       .then((response) => {
-        setPots(response.data);
+        setProducts(response.data);
       })
       .catch((error) => {
         console.log(error);
       });
   };
 
+  const createProduct = () => {
+    axios
+      .post(`http://localhost:3001/products`, {
+        nom: newProduct.nom,
+        poids: parseInt(newProduct.poids),
+        image: newProduct.image,
+      })
+      .then((response) => {
+        setProducts(response.data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+
+  if (isLoading) {
+    return (
+      <div
+        style={{
+          border: "4px solid black",
+          width: "100%",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Loader size="md" />
+      </div>
+    );
+  }
+
   return (
     <div>
-      {pots.map((pot, index) => {
+      <div>{JSON.stringify(newProduct)}</div>
+
+      <Input
+        placeholder="Nom"
+        onChange={(value) => {
+          setNewProduct({
+            ...newProduct,
+            nom: value,
+          });
+        }}
+      />
+      <Input
+        placeholder="Poids"
+        onChange={(value) => {
+          setNewProduct({
+            ...newProduct,
+            poids: value,
+          });
+        }}
+      />
+      <Input
+        placeholder="Image"
+        onChange={(value) => {
+          setNewProduct({
+            ...newProduct,
+            image: value,
+          });
+        }}
+      />
+
+      <Button
+        appearance="primary"
+        onClick={() => {
+          createProduct();
+        }}
+      >
+        Ajouter
+      </Button>
+
+      {products.map((pot, index) => {
+        const poidFinal = pot.poids / 1000;
+
         return (
           <div
             key={index}
             style={{
               fontSize: 20,
               borderWidth: "1px",
-              width: "33%",
+              width: 300,
               height: 200,
               marginBottom: 20,
               display: "flex",
@@ -64,6 +155,8 @@ function App() {
                 >
                   {pot.nom}
                 </a>
+                <div>{poidFinal}kg</div>
+                <div> ID: {pot.id}</div>
               </div>
               <div
                 style={{

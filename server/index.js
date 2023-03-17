@@ -3,7 +3,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 
 const app = express();
-const port = 3000;
+const port = 3001;
 
 app.use(cors());
 
@@ -66,9 +66,9 @@ app.get("/products/:productId", (req, res) => {
 
 // create one product
 app.post("/products", (req, res) => {
-  const { poids, nom } = req.body;
+  const { poids, nom, image } = req.body;
 
-  if (!poids || !nom) {
+  if (!poids || !nom || !image) {
     return res.send({ error: "params_missing" });
   }
 
@@ -76,6 +76,7 @@ app.post("/products", (req, res) => {
     id: (PRODUCTS.length + 1).toString(),
     nom: nom,
     poids: poids,
+    image: image,
   });
 
   res.send(PRODUCTS);
@@ -85,8 +86,14 @@ app.post("/products", (req, res) => {
 app.delete("/products/:productId", (req, res) => {
   const { productId } = req.params;
 
-  PRODUCTS.splice(parseInt(productId) - 1, 1);
+  const matchingProductIndex = PRODUCTS.findIndex(
+    (product) => product.id === productId
+  );
 
+  if (matchingProductIndex !== -1) {
+    PRODUCTS.splice(matchingProductIndex, 1);
+    return res.send(PRODUCTS);
+  }
   return res.send(PRODUCTS);
 });
 
